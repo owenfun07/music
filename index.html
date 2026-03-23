@@ -2,20 +2,41 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Music App</title>
+  <title>Mini Music Player</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <h1>🎵 Music Search</h1>
+<div class="app">
 
-  <div class="search-box">
-    <input id="searchInput" placeholder="Search for a song..." />
-    <button onclick="search()">Search</button>
+  <!-- PLAYER (LEFT) -->
+  <div class="player">
+    <div class="art"></div>
+
+    <h3 id="title">Not Playing</h3>
+    <p id="channel">Search for music</p>
+
+    <div class="controls">
+      <button onclick="prev()">⏮</button>
+      <button onclick="togglePlay()" id="playBtn">▶</button>
+      <button onclick="next()">⏭</button>
+    </div>
   </div>
 
-  <div id="results"></div>
+  <!-- SEARCH (RIGHT) -->
+  <div class="search">
+    <input id="searchInput" placeholder="Search any song..." />
+    <button onclick="search()">Search</button>
 
-  <script src="script.js"></script>
+    <div id="results"></div>
+  </div>
+
+</div>
+
+<!-- Hidden YouTube player -->
+<div id="player-container"></div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+<script src="script.js"></script>
 </body>
 </html>
