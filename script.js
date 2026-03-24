@@ -1,18 +1,16 @@
 const API_KEY = "AIzaSyCvmHIShdjnT4QMgb0djX1aGMKn-MOUgHg";
 
 let player;
-let currentVideoId = null;
 let isPlaying = false;
 let queue = [];
 let currentIndex = 0;
 let progressInterval;
 
-// Load YouTube Player
+// INIT PLAYER
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player-container', {
     height: '0',
     width: '0',
-    videoId: '',
     events: {
       onStateChange: onPlayerStateChange
     }
@@ -24,25 +22,21 @@ async function search() {
   const query = document.getElementById("searchInput").value;
   if (!query) return;
 
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "<p>🔎 Searching...</p>";
+
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(query)}&key=${API_KEY}`;
 
   try {
     const res = await fetch(url);
     const data = await res.json();
 
-    if (!data.items || data.items.length === 0) {
-      document.getElementById("results").innerHTML = "<p>No results found</p>";
-      return;
-    }
-
-    // keep only valid videos
     queue = data.items.filter(item => item.id?.videoId);
 
     displayResults(queue);
 
-  } catch (err) {
-    console.error(err);
-    alert("Error fetching results");
+  } catch {
+    resultsDiv.innerHTML = "<p>Error loading results</p>";
   }
 }
 
@@ -52,12 +46,17 @@ function displayResults(items) {
   resultsDiv.innerHTML = "";
 
   items.forEach((item, index) => {
+    const thumb = item.snippet.thumbnails.medium.url;
+
     const div = document.createElement("div");
     div.className = "result";
 
     div.innerHTML = `
-      <strong>${item.snippet.title}</strong><br>
-      ${item.snippet.channelTitle}
+      <img src="${thumb}">
+      <div>
+        <strong>${item.snippet.title}</strong><br>
+        ${item.snippet.channelTitle}
+      </div>
     `;
 
     div.onclick = () => playSong(index);
@@ -69,17 +68,13 @@ function displayResults(items) {
 // PLAY SONG
 function playSong(index) {
   const song = queue[index];
-  if (!song || !song.id.videoId) return;
+  if (!song) return;
 
   currentIndex = index;
-  currentVideoId = song.id.videoId;
 
-  player.loadVideoById(currentVideoId);
+  document.getElementById("title").innerText = "Loading...";
+  document.getElementById("channel").innerText = "";
 
-  document.getElementById("title").innerText = song.snippet.title;
-  document.getElementById("channel").innerText = song.snippet.channelTitle;
-
-  // COVER IMAGE
   const thumb = song.snippet.thumbnails;
   document.getElementById("cover").src =
     thumb.maxres?.url ||
@@ -87,12 +82,29 @@ function playSong(index) {
     thumb.medium?.url ||
     thumb.default?.url;
 
+  player.loadVideoById(song.id.videoId);
+
   isPlaying = true;
   updatePlayButton();
-  startProgressUpdater();
 }
 
-// PLAY / PAUSE
+// PLAYER STATE
+function onPlayerStateChange(event) {
+  if (event.data === YT.PlayerState.PLAYING) {
+    const song = queue[currentIndex];
+
+    document.getElementById("title").innerText = song.snippet.title;
+    document.getElementById("channel").innerText = song.snippet.channelTitle;
+
+    startProgressUpdater();
+  }
+
+  if (event.data === YT.PlayerState.ENDED) {
+    next();
+  }
+}
+
+// CONTROLS
 function togglePlay() {
   if (!player) return;
 
@@ -106,7 +118,6 @@ function togglePlay() {
   updatePlayButton();
 }
 
-// NEXT / PREV
 function next() {
   if (currentIndex < queue.length - 1) {
     playSong(currentIndex + 1);
@@ -119,25 +130,15 @@ function prev() {
   }
 }
 
-// UPDATE BUTTON
 function updatePlayButton() {
   document.getElementById("playBtn").innerText = isPlaying ? "⏸" : "▶";
 }
 
-// AUTO NEXT
-function onPlayerStateChange(event) {
-  if (event.data === YT.PlayerState.ENDED) {
-    next();
-  }
-}
-
-// PROGRESS BAR LOOP
+// PROGRESS
 function startProgressUpdater() {
   clearInterval(progressInterval);
 
   progressInterval = setInterval(() => {
-    if (!player || !player.getCurrentTime) return;
-
     const current = player.getCurrentTime();
     const duration = player.getDuration();
 
@@ -146,30 +147,21 @@ function startProgressUpdater() {
     const percent = (current / duration) * 100;
 
     document.getElementById("progressBar").value = percent;
-
     document.getElementById("currentTime").innerText = formatTime(current);
     document.getElementById("duration").innerText = formatTime(duration);
-
   }, 500);
 }
 
-// FORMAT TIME
 function formatTime(time) {
-  const minutes = Math.floor(time / 60);
-  const seconds = Math.floor(time % 60).toString().padStart(2, "0");
-  return `${minutes}:${seconds}`;
+  const m = Math.floor(time / 60);
+  const s = Math.floor(time % 60).toString().padStart(2, "0");
+  return `${m}:${s}`;
 }
 
-// SEEK BAR CONTROL
+// SEEK
 document.addEventListener("DOMContentLoaded", () => {
-  const progressBar = document.getElementById("progressBar");
-
-  progressBar.addEventListener("input", (e) => {
-    if (!player || !player.getDuration) return;
-
+  document.getElementById("progressBar").addEventListener("input", (e) => {
     const duration = player.getDuration();
-    const seekTo = (e.target.value / 100) * duration;
-
-    player.seekTo(seekTo, true);
+    player.seekTo((e.target.value / 100) * duration, true);
   });
 });
