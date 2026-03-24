@@ -10,53 +10,55 @@
 <div class="app">
 
   <!-- PLAYER -->
- <div class="player">
+  <div class="player">
 
-  <!-- COVER -->
-  <img id="cover" class="art" src="" />
+    <!-- COVER -->
+    <img id="cover" class="art" src="https://static.vecteezy.com/system/resources/thumbnails/001/200/726/small/musical-note.png" />
 
-  <!-- VIDEO PLAYER (hidden by default) -->
-  <div id="videoWrapper" style="display:none;">
-    <div id="player-container-visible"></div>
+    <!-- VIDEO -->
+    <div id="videoWrapper" style="display:none;">
+      <div class="video-container">
+        <div id="player-container-visible"></div>
+      </div>
+    </div>
+
+    <!-- TOGGLE -->
+    <button onclick="toggleVideo()" id="toggleBtn">
+      🎥 Switch to Video
+    </button>
+
+    <h3 id="title">Not Playing</h3>
+    <p id="channel">Search for music</p>
+
+    <div class="controls">
+      <button onclick="prev()">⏮</button>
+      <button onclick="togglePlay()" id="playBtn">▶</button>
+      <button onclick="next()">⏭</button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="progress-container">
+      <span id="currentTime">0:00</span>
+      <input type="range" id="progressBar" value="0" min="0" max="100">
+      <span id="duration">0:00</span>
+    </div>
+
   </div>
-
-  <!-- TOGGLE BUTTON -->
-  <button onclick="toggleVideo()" id="toggleBtn">
-    🎥 Switch to Video
-  </button>
-
-  <h3 id="title">Not Playing</h3>
-  <p id="channel">Search for music</p>
-
-  <div class="controls">
-    <button onclick="prev()">⏮</button>
-    <button onclick="togglePlay()" id="playBtn">▶</button>
-    <button onclick="next()">⏭</button>
-  </div>
-
-  <div class="progress-container">
-    <span id="currentTime">0:00</span>
-    <input type="range" id="progressBar">
-    <span id="duration">0:00</span>
-  </div>
-
-</div>
 
   <!-- SEARCH -->
- <div class="search">
+  <div class="search">
 
-  <div class="search-bar">
-    <input id="searchInput" placeholder="Search any song..." />
-    <button onclick="search()">Search</button>
-    <button onclick="showFavorites()">❤️ Favorites</button>
+    <div class="search-bar">
+      <input id="searchInput" placeholder="Search any song..." />
+      <button onclick="search()">Search</button>
+      <button onclick="showFavorites()">❤️ Favorites</button>
+    </div>
+
+    <div id="results"></div>
+
   </div>
 
-  <div id="results"></div>
-
 </div>
-</div>
-
-<div id="player-container"></div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="script.js"></script>
