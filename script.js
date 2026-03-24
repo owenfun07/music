@@ -134,7 +134,7 @@ function playSong(index) {
   clearTimeout(loadingTimeout);
   loadingTimeout = setTimeout(() => {
     document.getElementById("title").innerText = song.snippet.title;
-    document.getElementById("channel").innerText = "(starting...)";
+    document.getElementById("channel").innerText = "Ad playing, switch to video to skip";
   }, 4000);
 }
 
