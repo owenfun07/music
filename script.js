@@ -23,19 +23,41 @@ function onYouTubeIframeAPIReady() {
 async function search() {
   const query = document.getElementById("searchInput").value;
 
-  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoCategoryId=10&maxResults=10&q=${encodeURIComponent(query)}&key=${API_KEY}`;
+  if (!query) return;
 
-  const res = await fetch(url);
-  const data = await res.json();
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(query)}&key=${API_KEY}`;
 
-  queue = data.items;
-  displayResults(queue);
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    console.log("API Response:", data);
+
+    if (!data.items || data.items.length === 0) {
+      document.getElementById("results").innerHTML = "<p>No results found</p>";
+      return;
+    }
+
+    // Only keep valid videos
+    queue = data.items.filter(item => item.id && item.id.videoId);
+
+    displayResults(queue);
+
+  } catch (err) {
+    console.error(err);
+    alert("Error fetching results");
+  }
 }
 
 // Show results
 function displayResults(items) {
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "";
+
+  if (!items || items.length === 0) {
+    resultsDiv.innerHTML = "<p>No playable results</p>";
+    return;
+  }
 
   items.forEach((item, index) => {
     const div = document.createElement("div");
@@ -54,9 +76,11 @@ function displayResults(items) {
 
 // Play selected song
 function playSong(index) {
-  currentIndex = index;
   const song = queue[index];
 
+  if (!song || !song.id.videoId) return;
+
+  currentIndex = index;
   currentVideoId = song.id.videoId;
 
   player.loadVideoById(currentVideoId);
@@ -100,7 +124,7 @@ function updatePlayButton() {
   document.getElementById("playBtn").innerText = isPlaying ? "⏸" : "▶";
 }
 
-// Detect end
+// Detect end of song
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED) {
     next();
