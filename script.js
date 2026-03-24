@@ -6,28 +6,30 @@ let queue = [];
 let currentIndex = 0;
 let progressInterval;
 let loadingTimeout;
+let showingVideo = false;
 
 // FAVORITES
 let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
 
 // INIT PLAYER
 function onYouTubeIframeAPIReady() {
-  player = new YT.Player('player-container', {
-    height: '0',
-    width: '0',
+  player = new YT.Player('player-container-visible', {
+    height: '250',
+    width: '250',
     events: {
       onStateChange: onPlayerStateChange
     }
   });
 }
 
-// SEARCH (Enter key works)
+// ENTER KEY + SEEK BAR
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("searchInput").addEventListener("keypress", (e) => {
     if (e.key === "Enter") search();
   });
 
   document.getElementById("progressBar").addEventListener("input", (e) => {
+    if (!player || !player.getDuration) return;
     const duration = player.getDuration();
     player.seekTo((e.target.value / 100) * duration, true);
   });
@@ -103,7 +105,8 @@ function toggleFavorite(event, index) {
 
 // SHOW FAVORITES
 function showFavorites() {
-  displayResults(favorites);
+  queue = [...favorites];
+  displayResults(queue);
 }
 
 // PLAY SONG
@@ -116,6 +119,7 @@ function playSong(index) {
   document.getElementById("title").innerText = "Loading...";
   document.getElementById("channel").innerText = "";
 
+  // COVER
   const thumb = song.snippet.thumbnails;
   document.getElementById("cover").src =
     thumb.maxres?.url ||
@@ -128,7 +132,7 @@ function playSong(index) {
   isPlaying = true;
   updatePlayButton();
 
-  // 🔥 fallback in case ads delay playback
+  // fallback if ad delays playback
   clearTimeout(loadingTimeout);
   loadingTimeout = setTimeout(() => {
     document.getElementById("title").innerText = song.snippet.title;
@@ -151,6 +155,25 @@ function onPlayerStateChange(event) {
 
   if (event.data === YT.PlayerState.ENDED) {
     next();
+  }
+}
+
+// TOGGLE VIDEO (for ads)
+function toggleVideo() {
+  const cover = document.getElementById("cover");
+  const video = document.getElementById("videoWrapper");
+  const btn = document.getElementById("toggleBtn");
+
+  showingVideo = !showingVideo;
+
+  if (showingVideo) {
+    cover.style.display = "none";
+    video.style.display = "block";
+    btn.innerText = "🖼 Switch to Cover";
+  } else {
+    cover.style.display = "block";
+    video.style.display = "none";
+    btn.innerText = "🎥 Switch to Video";
   }
 }
 
@@ -189,6 +212,8 @@ function startProgressUpdater() {
   clearInterval(progressInterval);
 
   progressInterval = setInterval(() => {
+    if (!player || !player.getCurrentTime) return;
+
     const current = player.getCurrentTime();
     const duration = player.getDuration();
 
