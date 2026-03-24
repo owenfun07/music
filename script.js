@@ -1,4 +1,5 @@
 const API_KEY = "AIzaSyCvmHIShdjnT4QMgb0djX1aGMKn-MOUgHg";
+const DEFAULT_COVER = "default.jpg";
 
 let player;
 let isPlaying = false;
@@ -8,31 +9,32 @@ let progressInterval;
 let loadingTimeout;
 let showingVideo = false;
 
-// FAVORITES
 let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
 
 // INIT PLAYER
 function onYouTubeIframeAPIReady() {
   player = new YT.Player('player-container-visible', {
-    height: '250',
-    width: '250',
+    height: '100%',
+    width: '100%',
     events: {
       onStateChange: onPlayerStateChange
     }
   });
 }
 
-// ENTER KEY + SEEK BAR
+// INIT
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("searchInput").addEventListener("keypress", (e) => {
     if (e.key === "Enter") search();
   });
 
   document.getElementById("progressBar").addEventListener("input", (e) => {
-    if (!player || !player.getDuration) return;
+    if (!player) return;
     const duration = player.getDuration();
     player.seekTo((e.target.value / 100) * duration, true);
   });
+
+  resetPlayerUI();
 });
 
 // SEARCH
@@ -81,12 +83,11 @@ function displayResults(items) {
     `;
 
     div.onclick = () => playSong(index);
-
     resultsDiv.appendChild(div);
   });
 }
 
-// FAVORITES TOGGLE
+// FAVORITES
 function toggleFavorite(event, index) {
   event.stopPropagation();
 
@@ -103,13 +104,12 @@ function toggleFavorite(event, index) {
   displayResults(queue);
 }
 
-// SHOW FAVORITES
 function showFavorites() {
   queue = [...favorites];
   displayResults(queue);
 }
 
-// PLAY SONG
+// PLAY
 function playSong(index) {
   const song = queue[index];
   if (!song) return;
@@ -119,7 +119,6 @@ function playSong(index) {
   document.getElementById("title").innerText = "Loading...";
   document.getElementById("channel").innerText = "";
 
-  // COVER
   const thumb = song.snippet.thumbnails;
   document.getElementById("cover").src =
     thumb.maxres?.url ||
@@ -132,7 +131,6 @@ function playSong(index) {
   isPlaying = true;
   updatePlayButton();
 
-  // fallback if ad delays playback
   clearTimeout(loadingTimeout);
   loadingTimeout = setTimeout(() => {
     document.getElementById("title").innerText = song.snippet.title;
@@ -140,13 +138,12 @@ function playSong(index) {
   }, 4000);
 }
 
-// PLAYER STATE
+// PLAYER EVENTS
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
     clearTimeout(loadingTimeout);
 
     const song = queue[currentIndex];
-
     document.getElementById("title").innerText = song.snippet.title;
     document.getElementById("channel").innerText = song.snippet.channelTitle;
 
@@ -154,11 +151,15 @@ function onPlayerStateChange(event) {
   }
 
   if (event.data === YT.PlayerState.ENDED) {
-    next();
+    if (currentIndex < queue.length - 1) {
+      next();
+    } else {
+      resetPlayerUI();
+    }
   }
 }
 
-// TOGGLE VIDEO (for ads)
+// VIDEO TOGGLE
 function toggleVideo() {
   const cover = document.getElementById("cover");
   const video = document.getElementById("videoWrapper");
@@ -181,11 +182,8 @@ function toggleVideo() {
 function togglePlay() {
   if (!player) return;
 
-  if (isPlaying) {
-    player.pauseVideo();
-  } else {
-    player.playVideo();
-  }
+  if (isPlaying) player.pauseVideo();
+  else player.playVideo();
 
   isPlaying = !isPlaying;
   updatePlayButton();
@@ -212,8 +210,6 @@ function startProgressUpdater() {
   clearInterval(progressInterval);
 
   progressInterval = setInterval(() => {
-    if (!player || !player.getCurrentTime) return;
-
     const current = player.getCurrentTime();
     const duration = player.getDuration();
 
@@ -231,4 +227,11 @@ function formatTime(time) {
   const m = Math.floor(time / 60);
   const s = Math.floor(time % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
+}
+
+// RESET UI
+function resetPlayerUI() {
+  document.getElementById("title").innerText = "Not Playing";
+  document.getElementById("channel").innerText = "Search for music";
+  document.getElementById("cover").src = DEFAULT_COVER;
 }
