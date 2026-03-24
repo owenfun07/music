@@ -30,6 +30,7 @@ body {
   margin-bottom: 20px;
 }
 
+/* CONTROLS */
 .controls button {
   font-size: 20px;
   margin: 10px;
@@ -56,14 +57,19 @@ body {
 
 #progressBar {
   flex: 1;
-  cursor: pointer;
 }
 
-/* SEARCH */
+/* SEARCH SIDE */
 .search {
   width: 60%;
   padding: 20px;
   background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-bar {
+  margin-bottom: 15px;
 }
 
 input {
@@ -83,14 +89,27 @@ button {
   cursor: pointer;
 }
 
+/* RESULTS SCROLL */
 #results {
-  margin-top: 20px;
+  overflow-y: auto;
+  flex: 1;
 }
 
+/* RESULT ITEM */
 .result {
+  display: flex;
+  gap: 10px;
   padding: 10px;
   border-bottom: 1px solid #333;
   cursor: pointer;
+  align-items: center;
+}
+
+.result img {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
 .result:hover {
