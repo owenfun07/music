@@ -5,6 +5,7 @@ let currentVideoId = null;
 let isPlaying = false;
 let queue = [];
 let currentIndex = 0;
+let progressInterval;
 
 // Load YouTube Player
 function onYouTubeIframeAPIReady() {
@@ -13,16 +14,14 @@ function onYouTubeIframeAPIReady() {
     width: '0',
     videoId: '',
     events: {
-      onReady: () => {},
       onStateChange: onPlayerStateChange
     }
   });
 }
 
-// Search songs
+// SEARCH
 async function search() {
   const query = document.getElementById("searchInput").value;
-
   if (!query) return;
 
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(query)}&key=${API_KEY}`;
@@ -31,15 +30,13 @@ async function search() {
     const res = await fetch(url);
     const data = await res.json();
 
-    console.log("API Response:", data);
-
     if (!data.items || data.items.length === 0) {
       document.getElementById("results").innerHTML = "<p>No results found</p>";
       return;
     }
 
-    // Only keep valid videos
-    queue = data.items.filter(item => item.id && item.id.videoId);
+    // keep only valid videos
+    queue = data.items.filter(item => item.id?.videoId);
 
     displayResults(queue);
 
@@ -49,15 +46,10 @@ async function search() {
   }
 }
 
-// Show results
+// DISPLAY RESULTS
 function displayResults(items) {
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "";
-
-  if (!items || items.length === 0) {
-    resultsDiv.innerHTML = "<p>No playable results</p>";
-    return;
-  }
 
   items.forEach((item, index) => {
     const div = document.createElement("div");
@@ -74,10 +66,9 @@ function displayResults(items) {
   });
 }
 
-// Play selected song
+// PLAY SONG
 function playSong(index) {
   const song = queue[index];
-
   if (!song || !song.id.videoId) return;
 
   currentIndex = index;
@@ -88,11 +79,20 @@ function playSong(index) {
   document.getElementById("title").innerText = song.snippet.title;
   document.getElementById("channel").innerText = song.snippet.channelTitle;
 
+  // COVER IMAGE
+  const thumb = song.snippet.thumbnails;
+  document.getElementById("cover").src =
+    thumb.maxres?.url ||
+    thumb.high?.url ||
+    thumb.medium?.url ||
+    thumb.default?.url;
+
   isPlaying = true;
   updatePlayButton();
+  startProgressUpdater();
 }
 
-// Play / Pause
+// PLAY / PAUSE
 function togglePlay() {
   if (!player) return;
 
@@ -106,7 +106,7 @@ function togglePlay() {
   updatePlayButton();
 }
 
-// Next / Prev
+// NEXT / PREV
 function next() {
   if (currentIndex < queue.length - 1) {
     playSong(currentIndex + 1);
@@ -119,14 +119,57 @@ function prev() {
   }
 }
 
-// Sync button UI
+// UPDATE BUTTON
 function updatePlayButton() {
   document.getElementById("playBtn").innerText = isPlaying ? "⏸" : "▶";
 }
 
-// Detect end of song
+// AUTO NEXT
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.ENDED) {
     next();
   }
 }
+
+// PROGRESS BAR LOOP
+function startProgressUpdater() {
+  clearInterval(progressInterval);
+
+  progressInterval = setInterval(() => {
+    if (!player || !player.getCurrentTime) return;
+
+    const current = player.getCurrentTime();
+    const duration = player.getDuration();
+
+    if (!duration) return;
+
+    const percent = (current / duration) * 100;
+
+    document.getElementById("progressBar").value = percent;
+
+    document.getElementById("currentTime").innerText = formatTime(current);
+    document.getElementById("duration").innerText = formatTime(duration);
+
+  }, 500);
+}
+
+// FORMAT TIME
+function formatTime(time) {
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+}
+
+// SEEK BAR CONTROL
+document.addEventListener("DOMContentLoaded", () => {
+  const progressBar = document.getElementById("progressBar");
+
+  progressBar.addEventListener("input", (e) => {
+    if (!player || !player.getDuration) return;
+
+    const duration = player.getDuration();
+    const seekTo = (e.target.value / 100) * duration;
+
+    player.seekTo(seekTo, true);
+  });
+});
