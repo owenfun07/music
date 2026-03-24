@@ -10,7 +10,7 @@ body {
   height: 100vh;
 }
 
-/* LEFT PLAYER */
+/* PLAYER */
 .player {
   width: 40%;
   padding: 30px;
@@ -24,8 +24,9 @@ body {
 .art {
   width: 250px;
   height: 250px;
-  background: #2a2a2a;
   border-radius: 20px;
+  object-fit: cover;
+  background: #2a2a2a;
   margin-bottom: 20px;
 }
 
@@ -44,7 +45,21 @@ body {
   background: #555;
 }
 
-/* RIGHT SEARCH */
+/* PROGRESS */
+.progress-container {
+  width: 80%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+#progressBar {
+  flex: 1;
+  cursor: pointer;
+}
+
+/* SEARCH */
 .search {
   width: 60%;
   padding: 20px;
