@@ -5,6 +5,10 @@ let isPlaying = false;
 let queue = [];
 let currentIndex = 0;
 let progressInterval;
+let loadingTimeout;
+
+// FAVORITES
+let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
 
 // INIT PLAYER
 function onYouTubeIframeAPIReady() {
@@ -16,6 +20,18 @@ function onYouTubeIframeAPIReady() {
     }
   });
 }
+
+// SEARCH (Enter key works)
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("searchInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") search();
+  });
+
+  document.getElementById("progressBar").addEventListener("input", (e) => {
+    const duration = player.getDuration();
+    player.seekTo((e.target.value / 100) * duration, true);
+  });
+});
 
 // SEARCH
 async function search() {
@@ -32,7 +48,6 @@ async function search() {
     const data = await res.json();
 
     queue = data.items.filter(item => item.id?.videoId);
-
     displayResults(queue);
 
   } catch {
@@ -47,22 +62,48 @@ function displayResults(items) {
 
   items.forEach((item, index) => {
     const thumb = item.snippet.thumbnails.medium.url;
+    const isFav = favorites.some(f => f.id.videoId === item.id.videoId);
 
     const div = document.createElement("div");
     div.className = "result";
 
     div.innerHTML = `
       <img src="${thumb}">
-      <div>
+      <div style="flex:1">
         <strong>${item.snippet.title}</strong><br>
         ${item.snippet.channelTitle}
       </div>
+      <button onclick="toggleFavorite(event, ${index})">
+        ${isFav ? "❤️" : "🤍"}
+      </button>
     `;
 
     div.onclick = () => playSong(index);
 
     resultsDiv.appendChild(div);
   });
+}
+
+// FAVORITES TOGGLE
+function toggleFavorite(event, index) {
+  event.stopPropagation();
+
+  const song = queue[index];
+  const exists = favorites.find(f => f.id.videoId === song.id.videoId);
+
+  if (exists) {
+    favorites = favorites.filter(f => f.id.videoId !== song.id.videoId);
+  } else {
+    favorites.push(song);
+  }
+
+  localStorage.setItem("favorites", JSON.stringify(favorites));
+  displayResults(queue);
+}
+
+// SHOW FAVORITES
+function showFavorites() {
+  displayResults(favorites);
 }
 
 // PLAY SONG
@@ -86,11 +127,20 @@ function playSong(index) {
 
   isPlaying = true;
   updatePlayButton();
+
+  // 🔥 fallback in case ads delay playback
+  clearTimeout(loadingTimeout);
+  loadingTimeout = setTimeout(() => {
+    document.getElementById("title").innerText = song.snippet.title;
+    document.getElementById("channel").innerText = "(starting...)";
+  }, 4000);
 }
 
 // PLAYER STATE
 function onPlayerStateChange(event) {
   if (event.data === YT.PlayerState.PLAYING) {
+    clearTimeout(loadingTimeout);
+
     const song = queue[currentIndex];
 
     document.getElementById("title").innerText = song.snippet.title;
@@ -157,11 +207,3 @@ function formatTime(time) {
   const s = Math.floor(time % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
 }
-
-// SEEK
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("progressBar").addEventListener("input", (e) => {
-    const duration = player.getDuration();
-    player.seekTo((e.target.value / 100) * duration, true);
-  });
-});
