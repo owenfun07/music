@@ -1,4 +1,4 @@
-const API_KEY = "AIzaSyBpYAPbRLBhpeZLHXEgUVdCanRxcw7jy9c";
+const API_KEY = "AIzaSyCvmHIShdjnT4QMgb0djX1aGMKn-MOUgHg";
 
 let player;
 let currentVideoId = null;
