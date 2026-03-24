@@ -9,9 +9,10 @@
 
 <div class="app">
 
-  <!-- PLAYER (LEFT) -->
+  <!-- LEFT: PLAYER -->
   <div class="player">
-    <div class="art"></div>
+
+    <img id="cover" class="art" src="" />
 
     <h3 id="title">Not Playing</h3>
     <p id="channel">Search for music</p>
@@ -21,9 +22,26 @@
       <button onclick="togglePlay()" id="playBtn">▶</button>
       <button onclick="next()">⏭</button>
     </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container">
+      <span id="currentTime">0:00</span>
+
+      <input 
+        type="range" 
+        id="progressBar" 
+        value="0" 
+        min="0" 
+        max="100"
+        step="1"
+      >
+
+      <span id="duration">0:00</span>
+    </div>
+
   </div>
 
-  <!-- SEARCH (RIGHT) -->
+  <!-- RIGHT: SEARCH -->
   <div class="search">
     <input id="searchInput" placeholder="Search any song..." />
     <button onclick="search()">Search</button>
@@ -33,7 +51,7 @@
 
 </div>
 
-<!-- Hidden YouTube player -->
+<!-- Hidden YouTube Player -->
 <div id="player-container"></div>
 
 <script src="https://www.youtube.com/iframe_api"></script>
